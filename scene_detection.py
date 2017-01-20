@@ -3,7 +3,7 @@
 # robust for other types of video.
 
 import cv2
-import cv
+#import cv
 import argparse
 import json
 import os
@@ -13,11 +13,11 @@ import errno
 def getInfo(sourcePath):
     cap = cv2.VideoCapture(sourcePath)
     info = {
-        "framecount": cap.get(cv.CV_CAP_PROP_FRAME_COUNT),
-        "fps": cap.get(cv.CV_CAP_PROP_FPS),
-        "width": int(cap.get(cv.CV_CAP_PROP_FRAME_WIDTH)),
-        "height": int(cap.get(cv.CV_CAP_PROP_FRAME_HEIGHT)),
-        "codec": int(cap.get(cv.CV_CAP_PROP_FOURCC))
+        "framecount": cap.get(7), # CV_CAP_PROP_FRAME_COUNT
+        "fps": cap.get(5), # CV_CAP_PROP_FPS
+        "width": int(cap.get(4)), # CV_CAP_PROP_FRAME_WIDTH
+        "height": int(cap.get(3)), # CV_CAP_PROP_FRAME_HEIGHT
+        "codec": int(cap.get(6)) # CV_CAP_PROP_FOURCC
     }
     cap.release()
     return info
@@ -48,7 +48,7 @@ def extract_cols(image, numCols):
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, max_iter, epsilon)
 
     # cluster
-    compactness, labels, centers = cv2.kmeans(Z, K, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+    compactness, labels, centers = cv2.kmeans(data=Z, K=K, criteria=criteria, bestLabels=None, attempts=10, flags=cv2.KMEANS_RANDOM_CENTERS)
 
     clusterCounts = []
     for idx in range(K):
@@ -87,10 +87,10 @@ def calculateFrameStats(sourcePath, verbose=False, after_frame=0):
     lastFrame = None
     while(cap.isOpened()):
         ret, frame = cap.read()
-        if frame == None:
+        if frame is None:
             break
 
-        frame_number = cap.get(cv.CV_CAP_PROP_POS_FRAMES) - 1
+        frame_number = cap.get(1) - 1 #CV_CAP_PROP_POS_FRAMES
 
         # Convert to grayscale, scale down and blur to make
         # calculate image differences more robust to noise
@@ -103,7 +103,7 @@ def calculateFrameStats(sourcePath, verbose=False, after_frame=0):
             continue
 
 
-        if lastFrame != None:
+        if lastFrame is not None:
 
             diff = cv2.subtract(gray, lastFrame)
 
@@ -194,7 +194,7 @@ def detectScenes(sourcePath, destPath, data, name, verbose=False):
         if fi["diff_count"] < diff_threshold:
             continue
 
-        cap.set(cv.CV_CAP_PROP_POS_FRAMES, fi["frame_number"])
+        cap.set(1, fi["frame_number"]) # CV_CAP_PROP_POS_FRAMES
         ret, frame = cap.read()
 
         # extract dominant color
@@ -203,7 +203,7 @@ def detectScenes(sourcePath, destPath, data, name, verbose=False):
         data["frame_info"][index]["dominant_cols"] = cols
 
 
-        if frame != None:
+        if frame is not None:
             writeImagePyramid(destDir, name, fi["frame_number"], frame)
 
             if verbose:
